@@ -10,6 +10,9 @@ import {
   GraphQLString,
 } from 'graphql';
 import { UUIDType } from './types/uuid.js';
+import { Post, PrismaClient, Profile, User } from '@prisma/client';
+
+const prisma = new PrismaClient();
 
 export const MemberTypeId = new GraphQLEnumType({
   name: 'MemberTypeId',
@@ -40,7 +43,7 @@ export const MemberType = new GraphQLObjectType({
   },
 });
 
-export const Profile = new GraphQLObjectType({
+export const ProfileType = new GraphQLObjectType({
   name: 'Profile',
   fields: {
     id: {
@@ -56,8 +59,11 @@ export const Profile = new GraphQLObjectType({
       description: 'The year of birth of user',
     },
     memberType: {
-      type: new GraphQLNonNull(GraphQLString),
+      type: new GraphQLNonNull(MemberType),
       description: 'The member type of profile',
+      resolve: async (profile: Profile) => {
+        return prisma.memberType.findUnique({ where: { id: profile.memberTypeId } });
+      },
     },
   },
 });
@@ -84,7 +90,25 @@ export const CreateProfileInput = new GraphQLInputObjectType({
   },
 });
 
-export const Post = new GraphQLObjectType({
+export const ChangeProfileInput = new GraphQLInputObjectType({
+  name: 'ChangeProfileInput',
+  fields: {
+    isMale: {
+      type: GraphQLBoolean,
+      description: 'The gender of user',
+    },
+    yearOfBirth: {
+      type: GraphQLInt,
+      description: 'The year of birth',
+    },
+    memberTypeId: {
+      type: MemberTypeId,
+      description: 'The member type of profile',
+    },
+  },
+});
+
+export const PostType = new GraphQLObjectType({
   name: 'Post',
   fields: {
     id: {
@@ -99,10 +123,14 @@ export const Post = new GraphQLObjectType({
       type: new GraphQLNonNull(GraphQLString),
       description: 'The id of post',
     },
+    authorId: {
+      type: new GraphQLNonNull(UUIDType),
+      description: "Id of posts's author",
+    },
   },
 });
 
-export const User = new GraphQLObjectType({
+export const UserType = new GraphQLObjectType({
   name: 'User',
   fields: () => ({
     id: {
@@ -118,19 +146,22 @@ export const User = new GraphQLObjectType({
       description: 'The balance of user',
     },
     profile: {
-      type: Profile,
+      type: ProfileType,
       description: 'The profile of user',
+      // resolve: async (user: User) => {
+      //   return prisma.profile.findFirst({ where: { userId: user.id } });
+      // },
     },
     posts: {
-      type: new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(Post))),
+      type: new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(PostType))),
       description: 'The posts of user',
     },
     userSubscribedTo: {
-      type: new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(User))),
+      type: new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(UserType))),
       description: 'The userSubscribedTo of user',
     },
     subscribedToUser: {
-      type: new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(User))),
+      type: new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(UserType))),
       description: 'The subscribedToUser of user',
     },
   }),
@@ -150,16 +181,16 @@ export const CreateUserInput = new GraphQLInputObjectType({
   },
 });
 
-export const ChangePostInput = new GraphQLInputObjectType({
-  name: 'ChangePostInput',
+export const ChangeUserInput = new GraphQLInputObjectType({
+  name: 'ChangeUserInput',
   fields: {
-    title: {
+    name: {
       type: GraphQLString,
-      description: 'The title of post',
+      description: 'The name of user',
     },
-    content: {
-      type: GraphQLString,
-      description: 'The content of post',
+    balance: {
+      type: GraphQLFloat,
+      description: 'The balance of user',
     },
   },
 });
@@ -178,6 +209,20 @@ export const CreatePostInput = new GraphQLInputObjectType({
     authorId: {
       type: new GraphQLNonNull(UUIDType),
       description: 'The id of author of post',
+    },
+  },
+});
+
+export const ChangePostInput = new GraphQLInputObjectType({
+  name: 'ChangePostInput',
+  fields: {
+    title: {
+      type: GraphQLString,
+      description: 'The title of post',
+    },
+    content: {
+      type: GraphQLString,
+      description: 'The content of post',
     },
   },
 });
