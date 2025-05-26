@@ -1,15 +1,18 @@
-import { PrismaClient, User } from '@prisma/client';
+import { MemberType, Post, PrismaClient, Profile } from '@prisma/client';
 import { FastifyRequest } from 'fastify';
 import { MemberTypeId } from '../member-types/schemas.js';
 import DataLoader from 'dataloader';
+import { UserType } from './graphql-model.js';
 
-export type TDataLoader = DataLoader<unknown, User>;
 export interface GraphQLContext {
   prisma: PrismaClient;
   request: FastifyRequest;
   loaders: {
-    userSubscribedTo: TDataLoader;
-    subscribedToUser: TDataLoader;
+    userSubscribedTo: DataLoader<unknown, typeof UserType>;
+    subscribedToUser: DataLoader<unknown, typeof UserType>;
+    memberType: DataLoader<unknown, MemberType>;
+    posts: DataLoader<unknown, Post>;
+    profile: DataLoader<unknown, Profile>;
   };
 }
 
