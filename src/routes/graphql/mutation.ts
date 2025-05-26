@@ -47,7 +47,8 @@ export const MutationType = new GraphQLObjectType({
         id: { type: new GraphQLNonNull(UUIDType) },
       },
       resolve: async (_source, { id }: { id: User['id'] }) => {
-        return await prisma.user.delete({ where: { id } });
+        await prisma.user.delete({ where: { id } });
+        return `User with id ${id} successfully deleted`;
       },
     },
     createProfile: {
@@ -78,7 +79,8 @@ export const MutationType = new GraphQLObjectType({
         id: { type: new GraphQLNonNull(UUIDType) },
       },
       resolve: async (_source, { id }: { id: Profile['id'] }) => {
-        return await prisma.profile.delete({ where: { id } });
+        await prisma.profile.delete({ where: { id } });
+        return `Porfile with id ${id} successfully deleted`;
       },
     },
     createPost: {
@@ -93,6 +95,7 @@ export const MutationType = new GraphQLObjectType({
     changePost: {
       type: new GraphQLNonNull(PostType),
       args: {
+        id: { type: new GraphQLNonNull(UUIDType) },
         dto: { type: new GraphQLNonNull(ChangePostInput) },
       },
       resolve: async (
@@ -114,7 +117,8 @@ export const MutationType = new GraphQLObjectType({
         id: { type: new GraphQLNonNull(UUIDType) },
       },
       resolve: async (_source, { id }: { id: Post['id'] }) => {
-        return await prisma.post.delete({ where: { id } });
+        await prisma.post.delete({ where: { id } });
+        return `Post with id ${id} successfully deleted`;
       },
     },
     subscribeTo: {
@@ -127,9 +131,10 @@ export const MutationType = new GraphQLObjectType({
         _source,
         { userId, authorId }: { userId: User['id']; authorId: User['id'] },
       ) => {
-        return await prisma.subscribersOnAuthors.create({
+        await prisma.subscribersOnAuthors.create({
           data: { subscriberId: userId, authorId },
         });
+        return `User with id ${userId} subscibed to author with id ${authorId}`;
       },
     },
     unsubscribeFrom: {
@@ -142,7 +147,7 @@ export const MutationType = new GraphQLObjectType({
         _source,
         { userId, authorId }: { userId: User['id']; authorId: User['id'] },
       ) => {
-        return await prisma.subscribersOnAuthors.delete({
+        await prisma.subscribersOnAuthors.delete({
           where: {
             subscriberId_authorId: {
               authorId,
@@ -150,6 +155,7 @@ export const MutationType = new GraphQLObjectType({
             },
           },
         });
+        return `User with id ${userId} unsubscibed from author with id ${authorId}`;
       },
     },
   },
