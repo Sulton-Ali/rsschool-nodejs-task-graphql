@@ -1,4 +1,4 @@
-import { GraphQLNonNull, GraphQLObjectType } from 'graphql';
+import { GraphQLNonNull, GraphQLObjectType, GraphQLString } from 'graphql';
 import {
   ChangePostInput,
   ChangeProfileInput,
@@ -41,6 +41,15 @@ export const MutationType = new GraphQLObjectType({
         return await prisma.user.update({ where: { id }, data: dto });
       },
     },
+    deleteUser: {
+      type: new GraphQLNonNull(GraphQLString),
+      args: {
+        id: { type: new GraphQLNonNull(UUIDType) },
+      },
+      resolve: async (_source, { id }: { id: User['id'] }) => {
+        return await prisma.user.delete({ where: { id } });
+      },
+    },
     createProfile: {
       type: new GraphQLNonNull(ProfileType),
       args: {
@@ -61,6 +70,15 @@ export const MutationType = new GraphQLObjectType({
         { id, dto }: { id: Profile['id']; dto: Omit<Profile, 'id' | 'userId'> },
       ) => {
         return await prisma.profile.update({ where: { id }, data: dto });
+      },
+    },
+    deleteProfile: {
+      type: new GraphQLNonNull(GraphQLString),
+      args: {
+        id: { type: new GraphQLNonNull(UUIDType) },
+      },
+      resolve: async (_source, { id }: { id: Profile['id'] }) => {
+        return await prisma.profile.delete({ where: { id } });
       },
     },
     createPost: {
@@ -86,6 +104,50 @@ export const MutationType = new GraphQLObjectType({
           data: dto,
           include: {
             author: true,
+          },
+        });
+      },
+    },
+    deletePost: {
+      type: new GraphQLNonNull(GraphQLString),
+      args: {
+        id: { type: new GraphQLNonNull(UUIDType) },
+      },
+      resolve: async (_source, { id }: { id: Post['id'] }) => {
+        return await prisma.post.delete({ where: { id } });
+      },
+    },
+    subscribeTo: {
+      type: new GraphQLNonNull(GraphQLString),
+      args: {
+        userId: { type: new GraphQLNonNull(UUIDType) },
+        authorId: { type: new GraphQLNonNull(UUIDType) },
+      },
+      resolve: async (
+        _source,
+        { userId, authorId }: { userId: User['id']; authorId: User['id'] },
+      ) => {
+        return await prisma.subscribersOnAuthors.create({
+          data: { subscriberId: userId, authorId },
+        });
+      },
+    },
+    unsubscribeFrom: {
+      type: new GraphQLNonNull(GraphQLString),
+      args: {
+        userId: { type: new GraphQLNonNull(UUIDType) },
+        authorId: { type: new GraphQLNonNull(UUIDType) },
+      },
+      resolve: async (
+        _source,
+        { userId, authorId }: { userId: User['id']; authorId: User['id'] },
+      ) => {
+        return await prisma.subscribersOnAuthors.delete({
+          where: {
+            subscriberId_authorId: {
+              authorId,
+              subscriberId: userId,
+            },
           },
         });
       },
