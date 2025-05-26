@@ -10,9 +10,9 @@ import {
   GraphQLString,
 } from 'graphql';
 import { UUIDType } from './types/uuid.js';
-import { Post, PrismaClient, Profile, User } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { Profile, User } from '@prisma/client';
+import { GraphQLContext } from './model.js';
+import { prisma } from './prisma.js';
 
 export const MemberTypeId = new GraphQLEnumType({
   name: 'MemberTypeId',
@@ -130,7 +130,7 @@ export const PostType = new GraphQLObjectType({
   },
 });
 
-export const UserType = new GraphQLObjectType({
+export const UserType = new GraphQLObjectType<User, GraphQLContext>({
   name: 'User',
   fields: () => ({
     id: {
@@ -148,21 +148,42 @@ export const UserType = new GraphQLObjectType({
     profile: {
       type: ProfileType,
       description: 'The profile of user',
-      // resolve: async (user: User) => {
-      //   return prisma.profile.findFirst({ where: { userId: user.id } });
-      // },
+      resolve: async (user: User) => {
+        return prisma.profile.findUnique({
+          where: { userId: user.id },
+          include: {
+            memberType: true,
+          },
+        });
+      },
     },
     posts: {
       type: new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(PostType))),
       description: 'The posts of user',
+      resolve: async (user: User) => {
+        console.log('Posts called');
+
+        return prisma.post.findMany({
+          where: { authorId: user.id },
+          include: {
+            author: true,
+          },
+        });
+      },
     },
     userSubscribedTo: {
       type: new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(UserType))),
       description: 'The userSubscribedTo of user',
+      resolve: async (user, _args, context) => {
+        return await context.loaders.userSubscribedTo.load(user.id);
+      },
     },
     subscribedToUser: {
       type: new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(UserType))),
       description: 'The subscribedToUser of user',
+      resolve: async (user: User, _args, context) => {
+        return await context.loaders.subscribedToUser.load(user.id);
+      },
     },
   }),
 });

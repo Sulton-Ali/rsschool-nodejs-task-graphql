@@ -6,10 +6,8 @@ import {
   ProfileType,
   UserType,
 } from './graphql-model.js';
-import { PrismaClient } from '@prisma/client';
 import { UUIDType } from './types/uuid.js';
-
-const prisma = new PrismaClient();
+import { prisma } from './prisma.js';
 
 export const RootQueryType = new GraphQLObjectType({
   name: 'Query',
@@ -32,14 +30,7 @@ export const RootQueryType = new GraphQLObjectType({
     users: {
       type: new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(UserType))),
       resolve: async () => {
-        return prisma.user.findMany({
-          include: {
-            posts: true,
-            profile: true,
-            subscribedToUser: true,
-            userSubscribedTo: true,
-          },
-        });
+        return prisma.user.findMany();
       },
     },
     user: {
@@ -49,12 +40,8 @@ export const RootQueryType = new GraphQLObjectType({
       },
       resolve: async (_parent, { id }: { id: string }) => {
         return prisma.user.findUnique({
-          where: { id },
-          include: {
-            posts: true,
-            profile: true,
-            subscribedToUser: true,
-            userSubscribedTo: true,
+          where: {
+            id,
           },
         });
       },
@@ -95,7 +82,12 @@ export const RootQueryType = new GraphQLObjectType({
         id: { type: new GraphQLNonNull(UUIDType) },
       },
       resolve: async (_parent, { id }: { id: string }) => {
-        return prisma.profile.findUnique({ where: { id } });
+        return prisma.profile.findUnique({
+          where: { id },
+          include: {
+            memberType: true,
+          },
+        });
       },
     },
   }),

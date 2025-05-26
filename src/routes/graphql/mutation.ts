@@ -11,10 +11,9 @@ import {
   UserType,
 } from './graphql-model.js';
 import { CreatePostDto, CreateProfileDto, CreateUserDto } from './model.js';
-import { Post, PrismaClient, Profile, User } from '@prisma/client';
+import { Post, Profile, User } from '@prisma/client';
 import { UUIDType } from './types/uuid.js';
-
-const prisma = new PrismaClient();
+import { prisma } from './prisma.js';
 
 export const MutationType = new GraphQLObjectType({
   name: 'Mutation',
